@@ -9,5 +9,3 @@ openpyxl==3.1.2
 streamlit
 plotly==5.15.0
 xlsxwriter==1.4.5
-streamlit-aggrid==0.3.3
-numpy==1.24.3
