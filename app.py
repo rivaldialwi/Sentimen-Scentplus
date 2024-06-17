@@ -66,7 +66,6 @@ def convert_df_to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
-        writer.close()
     processed_data = output.getvalue()
     return processed_data
 
@@ -95,8 +94,7 @@ def run():
         # Menampilkan data dari database sebagai tabel dengan pagination
         data = st.session_state['data']
         if data:
-            df = pd.DataFrame(data, columns=['id', 'Text', 'sentiment', 'date'])
-            df.rename(columns={'sentiment': 'Human'}, inplace=True)
+            df = pd.DataFrame(data, columns=['id', 'Text', 'Human', 'date'])
             
             # Konfigurasi AgGrid
             gb = GridOptionsBuilder.from_dataframe(df)
@@ -131,9 +129,9 @@ def run():
             
             # Periksa apakah kolom 'Text' ada di file yang diunggah
             if 'Text' in df.columns:
-                # Inisialisasi TF-IDF Vectorizer dan fit_transform pada data teks
-                X = df['Text'].apply(clean_text)
-                X_tfidf = tfidf_vectorizer.transform(X)
+                # Bersihkan teks dan lakukan prediksi
+                df['Cleaned_Text'] = df['Text'].apply(clean_text)
+                X_tfidf = tfidf_vectorizer.transform(df['Cleaned_Text'])
                 
                 # Lakukan prediksi
                 df['Human'] = logreg_model.predict(X_tfidf)
