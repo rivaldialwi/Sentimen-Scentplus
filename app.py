@@ -9,12 +9,20 @@ from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from datetime import datetime
 from io import BytesIO
+from st_aggrid import AgGrid, GridOptionsBuilder
 
-# Membaca model yang sudah dilatih
-logreg_model = joblib.load("model100.pkl")
+# Mengunduh resource stopwords jika belum ada
+nltk.download('stopwords')
+nltk.download('punkt')
 
-# Memuat TF-IDF Vectorizer yang sudah di-fit
-tfidf_vectorizer = joblib.load("tfidf_vectorizer.pkl")
+# Membaca model yang sudah dilatih dan TF-IDF Vectorizer
+@st.cache_resource
+def load_model_and_vectorizer():
+    model = joblib.load("model100.pkl")
+    vectorizer = joblib.load("tfidf_vectorizer.pkl")
+    return model, vectorizer
+
+logreg_model, tfidf_vectorizer = load_model_and_vectorizer()
 
 # Fungsi untuk membersihkan teks
 def clean_text(text):
@@ -29,11 +37,8 @@ def clean_text(text):
 
 # Fungsi untuk melakukan klasifikasi teks
 def classify_text(input_text):
-    # Membersihkan teks input
     cleaned_text = clean_text(input_text)
-    # Mengubah teks input menjadi vektor fitur menggunakan TF-IDF
     input_vector = tfidf_vectorizer.transform([cleaned_text])
-    # Melakukan prediksi menggunakan model
     predicted_label = logreg_model.predict(input_vector)[0]
     return predicted_label
 
@@ -50,7 +55,7 @@ def insert_to_db(text, sentiment):
 def fetch_data():
     conn = sqlite3.connect('db_scentplus.db')
     cursor = conn.cursor()
-    cursor.execute('''SELECT rowid AS id, text, sentiment, date FROM riwayat''')
+    cursor.execute('''SELECT rowid AS id, text AS Text, sentiment, date FROM riwayat''')
     rows = cursor.fetchall()
     conn.close()
     return rows
@@ -61,7 +66,7 @@ def convert_df_to_excel(df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
-        writer.close()  # Gunakan writer.close() untuk menyimpan file
+        writer.close()
     processed_data = output.getvalue()
     return processed_data
 
@@ -87,23 +92,32 @@ def run():
                 insert_to_db(input_text, result)
                 st.session_state['data'] = fetch_data()
     
-        # Menampilkan data dari database sebagai tabel
+        # Menampilkan data dari database sebagai tabel dengan pagination
         data = st.session_state['data']
         if data:
-            df = pd.DataFrame(data, columns=['id', 'text', 'sentiment', 'date'])
+            df = pd.DataFrame(data, columns=['id', 'Text', 'sentiment', 'date'])
+            df.rename(columns={'sentiment': 'Human'}, inplace=True)
             
-            # Tambahkan CSS untuk menyesuaikan header
-            hide_dataframe_row_index = """
-                <style>
-                thead th {
-                    text-align: center;
-                }
-                </style>
-            """
-            st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
+            # Konfigurasi AgGrid
+            gb = GridOptionsBuilder.from_dataframe(df)
+            gb.configure_pagination(paginationAutoPageSize=False, paginationPageSize=10)
+            gridOptions = gb.build()
+
+            AgGrid(
+                df,
+                gridOptions=gridOptions,
+                enable_enterprise_modules=True,
+                height=400,
+                fit_columns_on_grid_load=True
+            )
             
-            # Tampilkan tabel tanpa indeks
-            st.write(df.to_html(index=False, escape=False), unsafe_allow_html=True)
+            # Tombol untuk mengunduh data sebagai file Excel
+            st.download_button(
+                label="Unduh data sebagai file Excel",
+                data=convert_df_to_excel(df),
+                file_name="data_sentimen.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
         else:
             st.write("Tidak ada data yang tersedia.")
 
