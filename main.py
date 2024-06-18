@@ -6,13 +6,13 @@ import manage_accounts
 import edit
 
 ADMIN_PAGES = {
-    "Prediksi Sentimen": app,
+    "Analisis Sentimen": app,
     "Laporan Analisis Sentimen": laporan,
     "Mengelola Akun": manage_accounts,
 }
 
 USER_PAGES = {
-    "Prediksi Sentimen": app,
+    "Analisis Sentimen": app,
     "Laporan Analisis Sentimen": laporan,
     "Edit Akun": edit,
 }

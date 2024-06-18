@@ -35,7 +35,7 @@ def classify_text(input_text):
     cleaned_text = clean_text(input_text)
     # Mengubah teks input menjadi vektor fitur menggunakan TF-IDF
     input_vector = tfidf_vectorizer.transform([cleaned_text])
-    # Melakukan prediksi menggunakan model
+    # Melakukan analisis menggunakan model
     predicted_label = logreg_model.predict(input_vector)[0]
     return predicted_label
 
@@ -71,7 +71,7 @@ def convert_df_to_excel(df):
 def run():
     st.title("Aplikasi Analisis Sentimen Scentplus")
 
-    tab1, tab2 = st.tabs(["Prediksi Satu Kalimat", "Prediksi File"])
+    tab1, tab2 = st.tabs(["Analisis Satu Kalimat", "Analisis File"])
 
     with tab1:
         st.header("Masukkan kalimat untuk analisis sentimen:")
@@ -121,7 +121,7 @@ def run():
             st.write("Tidak ada data yang tersedia.")
 
     with tab2:
-        st.header("Unggah file untuk Prediksi Sentimen")
+        st.header("Unggah file untuk analisis Sentimen")
         uploaded_file = st.file_uploader("Unggah file Excel", type=["xlsx"], key="file_uploader")
 
         if uploaded_file is not None:
@@ -134,17 +134,17 @@ def run():
                 X = df['Text'].apply(clean_text)
                 X_tfidf = tfidf_vectorizer.transform(X)
                 
-                # Lakukan prediksi
+                # Lakukan analisis
                 df['Human'] = logreg_model.predict(X_tfidf)
                 
-                # Tampilkan prediksi
+                # Tampilkan analisis
                 st.write(df)
                 
                 # Buat tombol unduh
                 st.download_button(
-                    label="Unduh file dengan prediksi",
+                    label="Unduh file dengan analisis",
                     data=convert_df_to_excel(df),
-                    file_name="prediksi_sentimen.xlsx",
+                    file_name="Analisis_sentimen.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
             else:
