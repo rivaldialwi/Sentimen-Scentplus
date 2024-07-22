@@ -177,6 +177,9 @@ replace_words_positif = {
     "nya": "",
     "menang": "",
     "buktiin": "",
+    "mahal": "",
+    "minggu": "",
+    "kirim": "",
     "wang": "wangi",
     "andala": "andalan",
 }
